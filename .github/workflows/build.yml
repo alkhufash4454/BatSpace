@@ -1,0 +1,102 @@
+name: Build BatSpace APK
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build Signed APK
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: "17"
+
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+
+      - name: Accept Android SDK licenses
+        run: yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses || true
+
+      - name: Restore keystore cache
+        id: keystore-cache
+        uses: actions/cache@v4
+        with:
+          path: batspace.jks
+          key: batspace-keystore-permanent-v1
+
+      - name: Generate keystore (first time only)
+        if: steps.keystore-cache.outputs.cache-hit != 'true'
+        run: |
+          keytool -genkey -v \
+            -keystore batspace.jks \
+            -keyalg RSA -keysize 2048 -validity 36500 \
+            -alias batspace \
+            -storepass BatSpace2024! \
+            -keypass BatSpace2024! \
+            -dname "CN=BatSpace,OU=Dev,O=AlKhufash,L=Khartoum,ST=Khartoum,C=SD"
+
+      - name: Build Release APK
+        run: ./gradlew assembleRelease --no-daemon --stacktrace
+
+      - name: Find build tools
+        id: buildtools
+        run: |
+          BT=$(ls $ANDROID_SDK_ROOT/build-tools/ | sort -V | tail -1)
+          echo "version=$BT" >> $GITHUB_OUTPUT
+
+      - name: Zipalign APK
+        run: |
+          UNSIGNED=$(find . -name "app-release-unsigned.apk" | head -1)
+          $ANDROID_SDK_ROOT/build-tools/${{ steps.buildtools.outputs.version }}/zipalign \
+            -v -p 4 "$UNSIGNED" app-release-aligned.apk
+
+      - name: Sign APK (V1+V2+V3)
+        run: |
+          SIGNED=app/build/outputs/apk/release/BatSpace-signed.apk
+          $ANDROID_SDK_ROOT/build-tools/${{ steps.buildtools.outputs.version }}/apksigner sign \
+            --ks batspace.jks --ks-key-alias batspace \
+            --ks-pass pass:BatSpace2024! --key-pass pass:BatSpace2024! \
+            --v1-signing-enabled true --v2-signing-enabled true --v3-signing-enabled true \
+            --out "$SIGNED" app-release-aligned.apk
+          echo "✅ $(ls -lh $SIGNED)"
+
+      - name: Verify signature
+        run: |
+          $ANDROID_SDK_ROOT/build-tools/${{ steps.buildtools.outputs.version }}/apksigner verify \
+            --verbose app/build/outputs/apk/release/BatSpace-signed.apk
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v1.0-build-${{ github.run_number }}
+          name: "BatSpace v1.0 - Build ${{ github.run_number }}"
+          files: app/build/outputs/apk/release/BatSpace-signed.apk
+          body: |
+            🦇 Bat Space — Multi-Account & App Cloning Platform
+            Build ${{ github.run_number }} | v1.0
+
+            ✨ Features:
+            - 📱 Clone any installed app (unlimited instances)
+            - 🔒 Lock individual clones with PIN
+            - 🆔 Unique virtual Android/Device ID per clone
+            - 🔄 Regenerate virtual identity anytime
+            - 🌑 Pure black dark UI with neon glow (blue/purple)
+            - 📋 Full clone manager (rename, delete, toggle)
+            - 🔔 Notification control per clone
+            - ⚡ Fast and lightweight
+
+            📱 Signed V1+V2+V3 — works on all Android versions
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
