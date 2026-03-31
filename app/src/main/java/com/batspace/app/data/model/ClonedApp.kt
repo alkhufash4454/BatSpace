@@ -16,6 +16,8 @@ data class ClonedApp(
     val notificationsEnabled: Boolean = true,
     val isEnabled: Boolean = true,
     val instanceIndex: Int = 1
-)
+) {
+    companion object
+}
 
 enum class LockType { NONE, PIN, FINGERPRINT }
