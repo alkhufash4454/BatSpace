@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Bat Space</string>
+    <string name="nav_home">Clones</string>
+    <string name="nav_settings">Settings</string>
+    <string name="add_app">Add App</string>
+    <string name="no_clones">No clones yet.\nTap + to add your first app.</string>
+    <string name="search_apps">Search apps…</string>
+    <string name="clone_of">Clone of</string>
+</resources>
