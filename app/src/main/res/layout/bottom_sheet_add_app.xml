@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:orientation="vertical" android:background="@color/bg_secondary"
+    android:paddingTop="8dp">
+
+    <View android:layout_width="40dp" android:layout_height="4dp"
+        android:layout_gravity="center" android:layout_marginBottom="12dp"
+        android:background="#33FFFFFF" />
+
+    <TextView android:text="Select App to Clone" android:textColor="@color/text_primary"
+        android:textSize="17sp" android:textStyle="bold"
+        android:paddingHorizontal="20dp" android:paddingBottom="12dp"
+        android:layout_width="wrap_content" android:layout_height="wrap_content" />
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp" android:layout_marginBottom="8dp"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etSearch" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:hint="@string/search_apps"
+            android:textColor="@color/text_primary" android:textColorHint="@color/text_hint"
+            android:inputType="text" android:imeOptions="actionSearch" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvApps" android:layout_width="match_parent"
+        android:layout_height="400dp" android:clipToPadding="false"
+        android:paddingBottom="16dp" />
+</LinearLayout>
